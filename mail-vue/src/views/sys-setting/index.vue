@@ -771,7 +771,6 @@ import axios from "axios";
 
 
 // ★★★ 在这里插入语言切换逻辑（第 858 行） ★★★
-const { locale } = useI18n();
 const lang = ref(localStorage.getItem("lang") || "en");
 function changeLang(val) {
   locale.value = val;
