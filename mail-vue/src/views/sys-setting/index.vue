@@ -769,6 +769,18 @@ import {fileToBase64} from "@/utils/file-utils.js"
 import {useI18n} from 'vue-i18n';
 import axios from "axios";
 
+
+// ★★★ 在这里插入语言切换逻辑（第 858 行） ★★★
+const { locale } = useI18n();
+const lang = ref(localStorage.getItem("lang") || "en");
+function changeLang(val) {
+  locale.value = val;
+  localStorage.setItem("lang", val);
+  location.reload();
+}
+// ★★★ 插入结束 ★★★
+
+
 defineOptions({
   name: 'sys-setting'
 })
@@ -776,6 +788,7 @@ defineOptions({
 const currentVersion = 'v2.9.0'
 const hasUpdate = ref(false)
 let getUpdateErrorCount = 1;
+
 const {t, locale} = useI18n();
 const firstLoading = ref(true)
 const backgroundImage = ref('')
