@@ -329,28 +329,47 @@
             </div>
           </div>
 
-          <div class="settings-card">
-            <div class="card-title">{{ $t('noticeTitle') }}</div>
-            <div class="card-content">
-              <div class="setting-item">
-                <div><span>{{ $t('noticePopup') }}</span></div>
-                <div class="forward">
-                  <span>{{ setting.notice === 0 ? $t('enabled') : $t('disabled') }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="openNoticePopupSetting">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('popUp') }}</span></div>
-                <div class="forward">
-                  <el-button class="opt-button" size="small" type="primary" @click="openNoticePopup">
-                    <Icon icon="mynaui:click-solid" width="18" height="18"/>
-                  </el-button>
-                </div>
-              </div>
-            </div>
-          </div>
+<div class="settings-card">
+  <div class="card-title">{{ $t('noticeTitle') }}</div>
+  <div class="card-content">
+
+    <div class="setting-item">
+      <div><span>{{ $t('noticePopup') }}</span></div>
+      <div class="forward">
+        <span>{{ setting.notice === 0 ? $t('enabled') : $t('disabled') }}</span>
+        <el-button class="opt-button" size="small" type="primary" @click="openNoticePopupSetting">
+          <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
+        </el-button>
+      </div>
+    </div>
+
+    <div class="setting-item">
+      <div><span>{{ $t('popUp') }}</span></div>
+      <div class="forward">
+        <el-button class="opt-button" size="small" type="primary" @click="openNoticePopup">
+          <Icon icon="mynaui:click-solid" width="18" height="18"/>
+        </el-button>
+      </div>
+    </div>
+
+    <!-- ★★★ 新增：Language，与上面两个同级 ★★★ -->
+    <div class="setting-item">
+      <div><span>Language</span></div>
+      <div class="forward">
+        <el-radio-group
+          v-model="lang"
+          @change="changeLang"
+          type="button"
+        >
+          <el-radio-button label="zh">ZH</el-radio-button>
+          <el-radio-button label="en">EN</el-radio-button>
+        </el-radio-group>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 
           <div class="settings-card about">
             <div class="card-title">{{ $t('about') }}</div>
