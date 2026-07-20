@@ -15,79 +15,137 @@ import oauthService from "./service/oauth-service";
 async function forwardEmailReceive(req, env, ctx) {
 
 
-	console.log(
-		'========== ForwardEmail =========='
-	);
+	console.log('========== ForwardEmail ==========');
 
 
 
-	const contentType =
-		req.headers.get('content-type') || '';
+	const data = await req.json();
 
 
 
 	console.log(
-		'Content-Type:',
-		contentType
+		'Subject:',
+		data.subject
 	);
 
 
 
-	let data = null;
+	console.log(
+		'From:',
+		data.from?.value?.[0]?.address
+	);
 
 
 
-	// ForwardEmail JSON
-	if (
-		contentType.includes('application/json')
-	) {
+	console.log(
+		'To:',
+		data.to?.value?.[0]?.address
+	);
 
 
-		data =
-			await req.json();
+
+	const to =
+		data.to?.value?.[0]?.address
+		||
+		data.recipients?.[0];
 
 
-	}
-	else {
 
-
-		const text =
-			await req.text();
-
+	if(!to){
 
 		console.log(
-			'RAW:',
-			text
+			'No recipient'
 		);
 
 
+		return new Response(
+			'No recipient',
+			{
+				status:400
+			}
+		);
 
-		try {
-
-			data =
-				JSON.parse(text);
+	}
 
 
-		}
-		catch(e) {
+
+
+	/*
+	
+	模拟 Cloudflare EmailMessage
+	
+	*/
+
+
+	const message = {
+
+
+		to: to,
+
+
+
+		raw:
+			new Response(
+				data.raw
+			).body,
+
+
+
+		setReject(reason){
+
+			console.log(
+				'Reject:',
+				reason
+			);
+
+		},
+
+
+
+
+		async forward(email){
 
 
 			console.log(
-				'不是 JSON'
-			);
-
-
-			return new Response(
-				'ok',
-				{
-					status:200
-				}
+				'Forward:',
+				email
 			);
 
 
 		}
 
-	}
+
+
+	};
+
+
+
+
+
+	/*
+	
+	调用原项目邮箱处理逻辑
+	
+	*/
+
+
+	await email(
+		message,
+		env,
+		ctx
+	);
+
+
+
+	return new Response(
+		'ok',
+		{
+			status:200
+		}
+	);
+
+
+}
 
 
 
