@@ -9,6 +9,7 @@ import kvObjService from './service/kv-obj-service';
 import oauthService from "./service/oauth-service";
 
 
+
 // CloudMailin 转 Cloudflare EmailMessage
 async function cloudMailinReceive(req, env, ctx) {
 
@@ -16,10 +17,10 @@ async function cloudMailinReceive(req, env, ctx) {
 	const form = await req.formData();
 
 
-	const file = form.get('message');
+	const messagePart = form.get('message');
 
 
-	if (!file) {
+	if (!messagePart) {
 
 		return new Response(
 			'No message',
@@ -32,7 +33,41 @@ async function cloudMailinReceive(req, env, ctx) {
 
 
 
-	const raw = await file.text();
+	let raw = '';
+
+
+
+	// CloudMailin 有时返回 string
+	if (typeof messagePart === 'string') {
+
+		raw = messagePart;
+
+	}
+
+
+	// Cloudflare File / Blob
+	else if (
+		messagePart instanceof Blob
+	) {
+
+		raw = await messagePart.text();
+
+	}
+
+
+	// 兜底
+	else {
+
+		raw = String(messagePart);
+
+	}
+
+
+
+	console.log(
+		'CloudMailin RAW length:',
+		raw.length
+	);
 
 
 
@@ -42,33 +77,75 @@ async function cloudMailinReceive(req, env, ctx) {
 
 
 	console.log(
-		'CloudMailin Subject:',
+		'Subject:',
 		parsed.subject
 	);
 
 
 	console.log(
-		'CloudMailin To:',
+		'From:',
+		parsed.from?.address
+	);
+
+
+	console.log(
+		'To:',
 		parsed.to
 	);
 
 
 
 	/*
-		这里非常关键
-
 		获取真实收件地址
 
-		例如：
+		例如:
 		test@vvv.nn.kg
 	*/
 
-	const to =
-		parsed.to?.[0]?.address;
+
+	let to = '';
 
 
 
-	if (!to) {
+	if(parsed.to && parsed.to.length){
+
+		to =
+			parsed.to[0].address;
+
+	}
+
+
+
+	// 某些邮件 To 为空
+	if(!to){
+
+		const headerTo =
+			parsed.headers
+			?.find(
+				h=>h.key.toLowerCase()==='to'
+			);
+
+
+		if(headerTo){
+
+			to =
+				headerTo.value
+				.match(
+					/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
+				)?.[0];
+
+		}
+
+	}
+
+
+
+	if(!to){
+
+		console.log(
+			'No recipient'
+		);
+
 
 		return new Response(
 			'No recipient',
@@ -81,7 +158,14 @@ async function cloudMailinReceive(req, env, ctx) {
 
 
 
-	// 模拟 Cloudflare EmailMessage
+
+	/*
+	
+	模拟 Cloudflare EmailMessage
+	
+	*/
+
+
 	const message = {
 
 
@@ -89,29 +173,33 @@ async function cloudMailinReceive(req, env, ctx) {
 
 
 
-		raw: new Blob(
-			[raw]
-		).stream(),
+		raw:
+			new Response(raw).body,
 
 
 
 		setReject(reason){
+
 
 			console.log(
 				'Reject:',
 				reason
 			);
 
+
 		},
+
 
 
 
 		async forward(email){
 
+
 			console.log(
 				'Forward:',
 				email
 			);
+
 
 		}
 
@@ -120,11 +208,14 @@ async function cloudMailinReceive(req, env, ctx) {
 
 
 
-	/*
-		调用原项目邮件处理逻辑
 
-		这里不用修改 email.js
+
+	/*
+	
+	调用原项目逻辑
+	
 	*/
+
 
 	await email(
 		message,
@@ -138,24 +229,36 @@ async function cloudMailinReceive(req, env, ctx) {
 		'ok'
 	);
 
+
 }
+
+
 
 
 
 export default {
 
 
-	async fetch(req, env, ctx) {
+	async fetch(req, env, ctx){
 
 
-		const url = new URL(req.url);
+		const url =
+			new URL(req.url);
 
 
 
-		// CloudMailin 收件入口
-		if (
-			url.pathname === '/inbound/cloudmailin'
-		) {
+	/*
+	
+	CloudMailin入口
+	
+	*/
+
+
+		if(
+			url.pathname ===
+			'/inbound/cloudmailin'
+		){
+
 
 			return await cloudMailinReceive(
 				req,
@@ -163,23 +266,31 @@ export default {
 				ctx
 			);
 
+
 		}
 
 
 
 
-		if (
+		if(
 			url.pathname.startsWith('/api/')
-		) {
+		){
+
 
 			url.pathname =
-				url.pathname.replace('/api','');
+				url.pathname.replace(
+					'/api',
+					''
+				);
 
 
-			req = new Request(
-				url.toString(),
-				req
-			);
+
+			req =
+				new Request(
+					url.toString(),
+					req
+				);
+
 
 
 			return app.fetch(
@@ -188,17 +299,22 @@ export default {
 				ctx
 			);
 
+
 		}
 
 
 
 
-		if (
-			['/static/','/attachments/']
+		if(
+			[
+				'/static/',
+				'/attachments/'
+			]
 			.some(
 				p=>url.pathname.startsWith(p)
 			)
-		) {
+		){
+
 
 			return await kvObjService.toObjResp(
 				{
@@ -207,7 +323,9 @@ export default {
 				url.pathname.substring(1)
 			);
 
+
 		}
+
 
 
 
@@ -218,12 +336,15 @@ export default {
 
 
 
-	// 保留原 CF Email 功能
+
+	// 保留 Cloudflare Email Routing
 	email: email,
 
 
 
-	async scheduled(c, env, ctx) {
+
+
+	async scheduled(c, env, ctx){
 
 
 		await verifyRecordService.clearRecord(
@@ -233,6 +354,7 @@ export default {
 		);
 
 
+
 		await userService.resetDaySendCount(
 			{
 				env
@@ -240,11 +362,13 @@ export default {
 		);
 
 
+
 		await emailService.completeReceiveAll(
 			{
 				env
 			}
 		);
+
 
 
 		await oauthService.clearNoBindOathUser(
@@ -255,5 +379,7 @@ export default {
 
 
 	}
+
+
 
 };
