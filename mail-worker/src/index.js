@@ -10,129 +10,116 @@ import oauthService from "./service/oauth-service";
 
 
 // =====================================
-// ForwardEmail Webhook 调试
+// ForwardEmail Webhook
 // =====================================
 async function forwardEmailReceive(req, env, ctx) {
 
-	console.log('========== ForwardEmail ==========');
 
-	console.log('Method:', req.method);
+	console.log(
+		'========== ForwardEmail =========='
+	);
 
-	console.log('Content-Type:', req.headers.get('content-type'));
 
-	console.log('---------- HEADERS ----------');
 
-	for (const [key, value] of req.headers.entries()) {
+	const contentType =
+		req.headers.get('content-type') || '';
 
-		console.log(`${key}: ${value}`);
+
+
+	console.log(
+		'Content-Type:',
+		contentType
+	);
+
+
+
+	let data = null;
+
+
+
+	// ForwardEmail JSON
+	if (
+		contentType.includes('application/json')
+	) {
+
+
+		data =
+			await req.json();
+
 
 	}
-
-	console.log('-------- END HEADERS --------');
-
-
-	// 读取原始文本
-	const clone1 = req.clone();
-
-	const text = await clone1.text();
-
-	console.log('TEXT LENGTH:', text.length);
-
-	console.log('---------- TEXT ----------');
-
-	console.log(text);
-
-	console.log('-------- END TEXT --------');
+	else {
 
 
-	// 尝试 JSON
-	try {
+		const text =
+			await req.text();
 
-		const clone2 = req.clone();
-
-		const json = await clone2.json();
-
-		console.log('---------- JSON ----------');
 
 		console.log(
-			JSON.stringify(
-				json,
-				null,
-				2
-			)
+			'RAW:',
+			text
 		);
 
-		console.log('-------- END JSON --------');
-
-	}
-	catch (e) {
-
-		console.log(
-			'JSON ERROR:',
-			e.message
-		);
-
-	}
 
 
-	// 尝试 FormData
-	try {
+		try {
 
-		const form = await req.formData();
+			data =
+				JSON.parse(text);
 
-		console.log('---------- FORM ----------');
 
-		for (const [key, value] of form.entries()) {
+		}
+		catch(e) {
 
-			if (typeof value === 'string') {
 
-				console.log(
-					`${key}: ${value}`
-				);
+			console.log(
+				'不是 JSON'
+			);
 
-			}
-			else {
 
-				console.log(`${key}: FILE`);
+			return new Response(
+				'ok',
+				{
+					status:200
+				}
+			);
 
-				console.log(
-					'name:',
-					value.name
-				);
-
-				console.log(
-					'type:',
-					value.type
-				);
-
-				console.log(
-					'size:',
-					value.size
-				);
-
-			}
 
 		}
 
-		console.log('-------- END FORM --------');
-
 	}
-	catch (e) {
 
-		console.log(
-			'FORM ERROR:',
-			e.message
-		);
 
-	}
+
+	console.log(
+		'---------- DATA ----------'
+	);
+
+
+
+	console.log(
+		JSON.stringify(
+			data,
+			null,
+			2
+		)
+	);
+
+
+
+	console.log(
+		'-------- END DATA --------'
+	);
+
 
 
 	return new Response(
 		'ok',
 		{
-			status: 200
+			status:200
 		}
 	);
+
 
 }
 
