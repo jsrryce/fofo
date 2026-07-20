@@ -8,55 +8,129 @@ import kvObjService from './service/kv-obj-service';
 import oauthService from "./service/oauth-service";
 
 
+
 // =====================================
-// ForwardEmail Webhook 测试
+// ForwardEmail Webhook 调试
 // =====================================
 async function forwardEmailReceive(req, env, ctx) {
 
-
 	console.log('========== ForwardEmail ==========');
 
+	console.log('Method:', req.method);
 
-	console.log(
-		'Method:',
-		req.method
-	);
+	console.log('Content-Type:', req.headers.get('content-type'));
 
-
+	console.log('---------- HEADERS ----------');
 
 	for (const [key, value] of req.headers.entries()) {
 
+		console.log(`${key}: ${value}`);
+
+	}
+
+	console.log('-------- END HEADERS --------');
+
+
+	// 读取原始文本
+	const clone1 = req.clone();
+
+	const text = await clone1.text();
+
+	console.log('TEXT LENGTH:', text.length);
+
+	console.log('---------- TEXT ----------');
+
+	console.log(text);
+
+	console.log('-------- END TEXT --------');
+
+
+	// 尝试 JSON
+	try {
+
+		const clone2 = req.clone();
+
+		const json = await clone2.json();
+
+		console.log('---------- JSON ----------');
+
 		console.log(
-			key + ':',
-			value
+			JSON.stringify(
+				json,
+				null,
+				2
+			)
+		);
+
+		console.log('-------- END JSON --------');
+
+	}
+	catch (e) {
+
+		console.log(
+			'JSON ERROR:',
+			e.message
 		);
 
 	}
 
 
+	// 尝试 FormData
+	try {
 
-	const body = await req.text();
+		const form = await req.formData();
 
+		console.log('---------- FORM ----------');
 
+		for (const [key, value] of form.entries()) {
 
-	console.log(
-		'---------- BODY ----------'
-	);
+			if (typeof value === 'string') {
 
+				console.log(
+					`${key}: ${value}`
+				);
 
-	console.log(body);
+			}
+			else {
 
+				console.log(`${key}: FILE`);
 
-	console.log(
-		'-------- END BODY --------'
-	);
+				console.log(
+					'name:',
+					value.name
+				);
 
+				console.log(
+					'type:',
+					value.type
+				);
+
+				console.log(
+					'size:',
+					value.size
+				);
+
+			}
+
+		}
+
+		console.log('-------- END FORM --------');
+
+	}
+	catch (e) {
+
+		console.log(
+			'FORM ERROR:',
+			e.message
+		);
+
+	}
 
 
 	return new Response(
 		'ok',
 		{
-			status:200
+			status: 200
 		}
 	);
 
@@ -65,19 +139,15 @@ async function forwardEmailReceive(req, env, ctx) {
 
 
 
-
 export default {
 
-
 	async fetch(req, env, ctx) {
-
 
 		const url = new URL(req.url);
 
 
-
 		// =====================================
-		// ForwardEmail webhook入口
+		// ForwardEmail Webhook
 		// =====================================
 		if (
 			url.pathname === '/inbound/forwardemail'
@@ -91,10 +161,6 @@ export default {
 
 		}
 
-
-
-
-
 		// =====================================
 		// API
 		// =====================================
@@ -102,22 +168,17 @@ export default {
 			url.pathname.startsWith('/api/')
 		) {
 
-
 			url.pathname =
 				url.pathname.replace(
 					'/api',
 					''
 				);
 
-
-
 			req =
 				new Request(
 					url.toString(),
 					req
 				);
-
-
 
 			return app.fetch(
 				req,
@@ -126,8 +187,6 @@ export default {
 			);
 
 		}
-
-
 
 
 
@@ -145,7 +204,6 @@ export default {
 			)
 		) {
 
-
 			return await kvObjService.toObjResp(
 				{
 					env
@@ -157,26 +215,18 @@ export default {
 
 
 
-
-
 		return env.assets.fetch(req);
-
 
 	},
 
 
 
-
-
-	// 保留 Cloudflare Email 功能
+	// 保留 Cloudflare Email Routing
 	email: email,
 
 
 
-
-
 	async scheduled(c, env, ctx) {
-
 
 		await verifyRecordService.clearRecord(
 			{
@@ -184,15 +234,11 @@ export default {
 			}
 		);
 
-
-
 		await userService.resetDaySendCount(
 			{
 				env
 			}
 		);
-
-
 
 		await emailService.completeReceiveAll(
 			{
@@ -200,16 +246,12 @@ export default {
 			}
 		);
 
-
-
 		await oauthService.clearNoBindOathUser(
 			{
 				env
 			}
 		);
 
-
 	}
 
-
-};
+};	
