@@ -14,17 +14,20 @@ export default {
 		// CloudMailin 测试入口
 		if (url.pathname === '/inbound/cloudmailin') {
 
-			const form = await req.formData();
+	const form = await req.formData();
 
-			const raw = form.get('message');
+	const raw = form.get('message');
 
-			console.log('====== CloudMailin Mail ======');
-			console.log(raw);
-			console.log('====== END ======');
-
-			return new Response('ok');
-
+	return new Response(
+		raw ? raw.substring(0, 1000) : 'NO MESSAGE',
+		{
+			headers: {
+				'content-type': 'text/plain;charset=utf-8'
+			}
 		}
+	);
+
+}
 		if (url.pathname.startsWith('/api/')) {
 			url.pathname = url.pathname.replace('/api', '')
 			req = new Request(url.toString(), req)
