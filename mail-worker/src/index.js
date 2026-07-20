@@ -9,17 +9,21 @@ import oauthService from "./service/oauth-service";
 
 
 
+
 // =====================================
 // ForwardEmail Webhook
 // =====================================
 async function forwardEmailReceive(req, env, ctx) {
 
 
-	console.log('========== ForwardEmail ==========');
+	console.log(
+		'========== ForwardEmail =========='
+	);
 
 
 
-	const data = await req.json();
+	const data =
+		await req.json();
 
 
 
@@ -44,6 +48,7 @@ async function forwardEmailReceive(req, env, ctx) {
 
 
 
+
 	const to =
 		data.to?.value?.[0]?.address
 		||
@@ -52,6 +57,7 @@ async function forwardEmailReceive(req, env, ctx) {
 
 
 	if(!to){
+
 
 		console.log(
 			'No recipient'
@@ -65,16 +71,15 @@ async function forwardEmailReceive(req, env, ctx) {
 			}
 		);
 
+
 	}
 
 
 
 
-	/*
-	
-	模拟 Cloudflare EmailMessage
-	
-	*/
+	// =====================================
+	// 模拟 Cloudflare EmailMessage
+	// =====================================
 
 
 	const message = {
@@ -93,10 +98,12 @@ async function forwardEmailReceive(req, env, ctx) {
 
 		setReject(reason){
 
+
 			console.log(
 				'Reject:',
 				reason
 			);
+
 
 		},
 
@@ -115,18 +122,15 @@ async function forwardEmailReceive(req, env, ctx) {
 		}
 
 
-
 	};
 
 
 
 
 
-	/*
-	
-	调用原项目邮箱处理逻辑
-	
-	*/
+	// =====================================
+	// 调用原项目邮件处理
+	// =====================================
 
 
 	await email(
@@ -149,54 +153,35 @@ async function forwardEmailReceive(req, env, ctx) {
 
 
 
-	console.log(
-		'---------- DATA ----------'
-	);
 
-
-
-	console.log(
-		JSON.stringify(
-			data,
-			null,
-			2
-		)
-	);
-
-
-
-	console.log(
-		'-------- END DATA --------'
-	);
-
-
-
-	return new Response(
-		'ok',
-		{
-			status:200
-		}
-	);
-
-
-}
 
 
 
 
 export default {
 
+
 	async fetch(req, env, ctx) {
 
-		const url = new URL(req.url);
+
+
+		const url =
+			new URL(req.url);
+
+
+
 
 
 		// =====================================
-		// ForwardEmail Webhook
+		// ForwardEmail webhook
 		// =====================================
-		if (
-			url.pathname === '/inbound/forwardemail'
-		) {
+
+
+		if(
+			url.pathname ===
+			'/inbound/forwardemail'
+		){
+
 
 			return await forwardEmailReceive(
 				req,
@@ -204,14 +189,23 @@ export default {
 				ctx
 			);
 
+
 		}
+
+
+
+
+
 
 		// =====================================
 		// API
 		// =====================================
-		if (
+
+
+		if(
 			url.pathname.startsWith('/api/')
-		) {
+		){
+
 
 			url.pathname =
 				url.pathname.replace(
@@ -219,11 +213,15 @@ export default {
 					''
 				);
 
+
+
 			req =
 				new Request(
 					url.toString(),
 					req
 				);
+
+
 
 			return app.fetch(
 				req,
@@ -231,14 +229,21 @@ export default {
 				ctx
 			);
 
+
 		}
+
+
+
+
 
 
 
 		// =====================================
 		// 静态资源
 		// =====================================
-		if (
+
+
+		if(
 			[
 				'/static/',
 				'/attachments/'
@@ -247,7 +252,8 @@ export default {
 				p =>
 					url.pathname.startsWith(p)
 			)
-		) {
+		){
+
 
 			return await kvObjService.toObjResp(
 				{
@@ -256,22 +262,41 @@ export default {
 				url.pathname.substring(1)
 			);
 
+
 		}
+
+
+
+
 
 
 
 		return env.assets.fetch(req);
 
+
+
 	},
 
 
 
+
+
+
+
 	// 保留 Cloudflare Email Routing
+
 	email: email,
 
 
 
+
+
+
+
+
 	async scheduled(c, env, ctx) {
+
+
 
 		await verifyRecordService.clearRecord(
 			{
@@ -279,11 +304,17 @@ export default {
 			}
 		);
 
+
+
+
 		await userService.resetDaySendCount(
 			{
 				env
 			}
 		);
+
+
+
 
 		await emailService.completeReceiveAll(
 			{
@@ -291,12 +322,19 @@ export default {
 			}
 		);
 
+
+
+
 		await oauthService.clearNoBindOathUser(
 			{
 				env
 			}
 		);
 
+
+
 	}
 
-};	
+
+
+};
