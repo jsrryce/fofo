@@ -11,12 +11,14 @@ export default {
 		const url = new URL(req.url)
 
 
-		// CloudMailin 测试入口
-		if (url.pathname === '/inbound/cloudmailin') {
+// CloudMailin 测试入口
+if (url.pathname === '/inbound/cloudmailin') {
 
 	const form = await req.formData();
 
 	const raw = form.get('message');
+
+	console.log('CloudMailin received');
 
 	return new Response(
 		raw ? raw.substring(0, 1000) : 'NO MESSAGE',
@@ -28,6 +30,7 @@ export default {
 	);
 
 }
+		 
 		if (url.pathname.startsWith('/api/')) {
 			url.pathname = url.pathname.replace('/api', '')
 			req = new Request(url.toString(), req)
