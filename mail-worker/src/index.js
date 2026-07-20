@@ -8,6 +8,63 @@ import kvObjService from './service/kv-obj-service';
 import oauthService from "./service/oauth-service";
 
 
+// =====================================
+// ForwardEmail Webhook 测试
+// =====================================
+async function forwardEmailReceive(req, env, ctx) {
+
+
+	console.log('========== ForwardEmail ==========');
+
+
+	console.log(
+		'Method:',
+		req.method
+	);
+
+
+
+	for (const [key, value] of req.headers.entries()) {
+
+		console.log(
+			key + ':',
+			value
+		);
+
+	}
+
+
+
+	const body = await req.text();
+
+
+
+	console.log(
+		'---------- BODY ----------'
+	);
+
+
+	console.log(body);
+
+
+	console.log(
+		'-------- END BODY --------'
+	);
+
+
+
+	return new Response(
+		'ok',
+		{
+			status:200
+		}
+	);
+
+}
+
+
+
+
 
 export default {
 
@@ -19,56 +76,18 @@ export default {
 
 
 
-		// ==========================
-		// Forward Email Webhook 测试入口
-		// ==========================
-		if (url.pathname === '/inbound/forwardemail') {
+		// =====================================
+		// ForwardEmail webhook入口
+		// =====================================
+		if (
+			url.pathname === '/inbound/forwardemail'
+		) {
 
-
-			console.log('========== Forward Email ==========');
-
-
-			console.log(
-				'Method:',
-				req.method
+			return await forwardEmailReceive(
+				req,
+				env,
+				ctx
 			);
-
-
-
-			for (const [key, value] of req.headers.entries()) {
-
-				console.log(
-					key + ':',
-					value
-				);
-
-			}
-
-
-
-			const body = await req.text();
-
-
-
-			console.log(
-				'---------- BODY ----------'
-			);
-
-
-			console.log(body);
-
-
-
-			console.log(
-				'-------- END BODY --------'
-			);
-
-
-
-			return new Response(
-				'ok'
-			);
-
 
 		}
 
@@ -76,9 +95,9 @@ export default {
 
 
 
-		// ==========================
+		// =====================================
 		// API
-		// ==========================
+		// =====================================
 		if (
 			url.pathname.startsWith('/api/')
 		) {
@@ -106,15 +125,15 @@ export default {
 				ctx
 			);
 
-
 		}
 
 
 
 
-		// ==========================
-		// 静态文件
-		// ==========================
+
+		// =====================================
+		// 静态资源
+		// =====================================
 		if (
 			[
 				'/static/',
@@ -134,7 +153,6 @@ export default {
 				url.pathname.substring(1)
 			);
 
-
 		}
 
 
@@ -149,7 +167,8 @@ export default {
 
 
 
-	// 保留 Cloudflare Email Routing
+
+	// 保留 Cloudflare Email 功能
 	email: email,
 
 
