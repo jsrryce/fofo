@@ -10,6 +10,21 @@ export default {
 
 		const url = new URL(req.url)
 
+
+		// CloudMailin 测试入口
+		if (url.pathname === '/inbound/cloudmailin') {
+
+			const form = await req.formData();
+
+			const raw = form.get('message');
+
+			console.log('====== CloudMailin Mail ======');
+			console.log(raw);
+			console.log('====== END ======');
+
+			return new Response('ok');
+
+		}
 		if (url.pathname.startsWith('/api/')) {
 			url.pathname = url.pathname.replace('/api', '')
 			req = new Request(url.toString(), req)
